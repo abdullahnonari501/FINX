@@ -1,0 +1,8 @@
+flask>=3.0.0
+gunicorn>=21.2.0
+numpy>=1.26.0
+pandas>=2.1.0
+scipy>=1.11.0
+# Optional live-data sources for data_fetcher.py
+psx-data-reader>=0.2.0
+yfinance>=0.2.40

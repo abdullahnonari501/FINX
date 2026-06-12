@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FINX — Portfolio Intelligence System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1"></script>
+</head>
+<body>
+
+<!-- Background grain -->
+<div class="grain"></div>
+
+<!-- Header -->
+<header class="header">
+  <div class="brand">
+    <div class="logo-mark">⌬</div>
+    <div>
+      <div class="brand-name">FINX</div>
+      <div class="brand-tag">Portfolio Intelligence System · ES-447 CEP</div>
+    </div>
+  </div>
+  <div class="header-meta">
+    <div class="meta-pill"><span class="dot live"></span> Local data engine</div>
+    <div class="meta-pill" id="tickerCount">— tickers loaded</div>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- Hero / Stepper -->
+  <section class="hero">
+    <h1 class="hero-title">
+      Quantitative portfolio construction,<br>
+      <span class="hero-italic">from sector to Sharpe.</span>
+    </h1>
+    <p class="hero-sub">Five years of fundamentals · 52 weeks of price action · CAPM · Modern Portfolio Theory · all on Pakistan Stock Exchange data.</p>
+
+    <div class="stepper">
+      <div class="step active" data-step="1"><span>01</span> Screen Sector</div>
+      <div class="step-line"></div>
+      <div class="step" data-step="2"><span>02</span> Build Portfolio</div>
+      <div class="step-line"></div>
+      <div class="step" data-step="3"><span>03</span> Optimize & Report</div>
+      <div class="step-line"></div>
+      <div class="step" data-step="4"><span>04</span> Validate</div>
+    </div>
+  </section>
+
+  <!-- STEP 1: SECTOR SCREENING -->
+  <section class="panel" id="panel-screen">
+    <div class="panel-header">
+      <div>
+        <div class="panel-num">01</div>
+        <h2 class="panel-title">Fundamental Sector Screening</h2>
+        <p class="panel-desc">Five-year ratio analysis · lifecycle classification · composite ranking</p>
+      </div>
+    </div>
+
+    <div class="control-row">
+      <div class="field">
+        <label>PSX Sector</label>
+        <select id="sectorSelect">
+          <option value="">— select sector —</option>
+          {% for s in sectors %}<option value="{{s}}">{{s}}</option>{% endfor %}
+        </select>
+      </div>
+      <button class="btn primary" id="btnScreen">
+        <span>Run Screening</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+
+    <div id="screenLoading" class="loading hidden">
+      <div class="loader"></div>
+      <span>Computing ROE · ROA · BVPS · EPS · EBIT · EBT · lifecycle stages...</span>
+    </div>
+
+    <div id="screenResults" class="results hidden">
+      <!-- Ranking table -->
+      <div class="result-block">
+        <div class="block-header">
+          <h3>Ranking · <span id="sectorLabel" class="muted"></span></h3>
+          <span class="badge" id="rankedCount"></span>
+        </div>
+        <div class="table-scroll">
+          <table class="ftable" id="rankingTable">
+            <thead><tr>
+              <th>Rank</th><th>Ticker</th><th>Score</th><th>Stage</th>
+              <th>ROE %</th><th>ROA %</th><th>BVPS</th><th>EPS</th>
+              <th>EBIT</th><th>EBT</th><th>Net Income</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Top 2 spotlight -->
+      <div class="result-block">
+        <div class="block-header">
+          <h3>Shortlisted Stocks</h3>
+          <span class="badge gold">TOP 2 BY COMPOSITE SCORE</span>
+        </div>
+        <div class="top2-grid" id="top2Grid"></div>
+      </div>
+
+      <!-- Fundamental trend charts -->
+      <div class="result-block">
+        <div class="block-header">
+          <h3>Five-Year Fundamental Trends</h3>
+        </div>
+        <div class="chart-grid" id="fundCharts"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 2 + 3: PORTFOLIO CONSTRUCTION & OPTIMIZATION -->
+  <section class="panel hidden" id="panel-portfolio">
+    <div class="panel-header">
+      <div>
+        <div class="panel-num">02</div>
+        <h2 class="panel-title">Portfolio Construction</h2>
+        <p class="panel-desc">Two shortlisted stocks + MDTL & MLCF benchmarks · Hybrid Price Models · CAPM · MPT</p>
+      </div>
+    </div>
+
+    <div class="control-row">
+      <div class="ticker-chips" id="tickerChips"></div>
+      <div class="opt-mode">
+        <label class="radio">
+          <input type="radio" name="mode" value="sharpe" checked> Maximum Sharpe
+        </label>
+        <label class="radio">
+          <input type="radio" name="mode" value="minvar"> Minimum Variance
+        </label>
+      </div>
+      <button class="btn primary" id="btnOptimize">
+        <span>Run CAPM + MPT</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+
+    <div id="optLoading" class="loading hidden">
+      <div class="loader"></div>
+      <span>Calibrating λ via grid search · optimizing SuperTrend · running Ledoit-Wolf shrinkage...</span>
+    </div>
+
+    <div id="optResults" class="results hidden">
+
+      <!-- Hero metrics -->
+      <div class="metric-grid">
+        <div class="metric-card accent">
+          <div class="metric-label">Expected Return</div>
+          <div class="metric-value" id="mExpRet">—</div>
+          <div class="metric-sub">annualized</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Portfolio Risk</div>
+          <div class="metric-value" id="mRisk">—</div>
+          <div class="metric-sub">std deviation</div>
+        </div>
+        <div class="metric-card gold">
+          <div class="metric-label">Sharpe Ratio</div>
+          <div class="metric-value" id="mSharpe">—</div>
+          <div class="metric-sub">excess return / risk</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Risk-Free</div>
+          <div class="metric-value" id="mRf">—</div>
+          <div class="metric-sub">Pakistan T-Bill proxy</div>
+        </div>
+      </div>
+
+      <!-- Allocation + Frontier -->
+      <div class="dual-grid">
+        <div class="result-block">
+          <div class="block-header"><h3>Optimal Allocation</h3></div>
+          <div class="allocation-row">
+            <div class="donut-wrap"><canvas id="donutChart"></canvas></div>
+            <div class="weight-list" id="weightList"></div>
+          </div>
+        </div>
+        <div class="result-block">
+          <div class="block-header"><h3>Efficient Frontier</h3></div>
+          <div class="chart-wrap"><canvas id="frontierChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Technical Models -->
+      <div class="result-block">
+        <div class="block-header">
+          <h3>Hybrid Technical Signals</h3>
+          <span class="badge">MODEL 1: P̂ · MODEL 2: TREND</span>
+        </div>
+        <div class="tech-grid" id="techGrid"></div>
+      </div>
+
+      <!-- CAPM -->
+      <div class="result-block">
+        <div class="block-header"><h3>CAPM Analysis</h3></div>
+        <div class="table-scroll">
+          <table class="ftable" id="capmTable">
+            <thead><tr>
+              <th>Stock</th><th>Beta (β)</th><th>Nature</th>
+              <th>Expected R%</th><th>Actual R%</th><th>Alpha (α)%</th><th>Status</th>
+            </tr></thead><tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Correlation heatmap -->
+      <div class="result-block">
+        <div class="block-header"><h3>Return Correlation Matrix</h3></div>
+        <div id="corrHeatmap" class="corr-wrap"></div>
+      </div>
+
+      <!-- Final recommendation -->
+      <div class="recommendation" id="recBox">
+        <div class="rec-label">FINAL RECOMMENDATION</div>
+        <div class="rec-text" id="recText"></div>
+        <button class="btn ghost" id="btnDownload">Download Report (JSON)</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 4: VALIDATION & BACKTESTING -->
+  <section class="panel hidden" id="panel-validate">
+    <div class="panel-header">
+      <div>
+        <div class="panel-num">04</div>
+        <h2 class="panel-title">Validation &amp; Out-of-Sample Backtest</h2>
+        <p class="panel-desc">Train on in-sample data · simulate forward through holdout · compare against equal-weight &amp; KSE-100</p>
+      </div>
+    </div>
+
+    <div class="control-row">
+      <div class="field" style="max-width:240px;">
+        <label>Holdout Window</label>
+        <select id="holdoutSelect">
+          <option value="2">2 months</option>
+          <option value="3">3 months</option>
+          <option value="6" selected>6 months (CEP spec)</option>
+          <option value="12">12 months</option>
+        </select>
+      </div>
+      <button class="btn primary" id="btnValidate">
+        <span>Run Backtest</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+
+    <div id="valLoading" class="loading hidden">
+      <div class="loader"></div>
+      <span>Splitting train/holdout · re-optimizing portfolio on in-sample only · simulating forward...</span>
+    </div>
+
+    <div id="valResults" class="results hidden">
+
+      <!-- Validation hero metrics -->
+      <div class="metric-grid">
+        <div class="metric-card accent">
+          <div class="metric-label">FINX Return (holdout)</div>
+          <div class="metric-value" id="vFinxRet">—</div>
+          <div class="metric-sub">cumulative</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Benchmark Return</div>
+          <div class="metric-value" id="vBenchRet">—</div>
+          <div class="metric-sub">equal-weight basket</div>
+        </div>
+        <div class="metric-card gold">
+          <div class="metric-label">Alpha (total)</div>
+          <div class="metric-value" id="vAlpha">—</div>
+          <div class="metric-sub">vs benchmark</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Max Drawdown</div>
+          <div class="metric-value" id="vDD">—</div>
+          <div class="metric-sub">peak-to-trough</div>
+        </div>
+      </div>
+
+      <!-- Equity curve chart -->
+      <div class="result-block">
+        <div class="block-header">
+          <h3>Cumulative Equity · Holdout Period</h3>
+          <span class="badge" id="vCutoff"></span>
+        </div>
+        <div class="chart-wrap" style="height: 320px;"><canvas id="equityChart"></canvas></div>
+      </div>
+
+      <!-- Side-by-side metrics comparison -->
+      <div class="result-block">
+        <div class="block-header"><h3>Strategy Comparison · Risk &amp; Return Statistics</h3></div>
+        <div class="table-scroll">
+          <table class="ftable" id="valTable">
+            <thead><tr>
+              <th>Strategy</th><th>Total Return %</th><th>Annualized %</th>
+              <th>Volatility %</th><th>Sharpe</th><th>Max DD %</th><th>Weeks</th>
+            </tr></thead><tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- In-sample vs realized -->
+      <div class="result-block">
+        <div class="block-header"><h3>In-Sample Forecast vs Realized Performance</h3></div>
+        <div class="insample-grid" id="insampleGrid"></div>
+        <p class="muted" style="margin-top:14px; font-size:12px;">
+          The in-sample expected return is what the optimizer projected based on training data alone.
+          The realized number is what would have actually happened if the portfolio had been deployed
+          at the cutoff date. The gap measures forecast accuracy.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div>FINX · CEP ES-447 Financial Engineering · Spring 2026 · GIK Institute</div>
+    <div class="muted">Data: PSX historical · KSE-100 benchmark · models from Assignments 1-4</div>
+  </footer>
+</main>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

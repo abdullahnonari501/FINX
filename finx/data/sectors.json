@@ -1,0 +1,19 @@
+{
+  "_meta": {
+    "description": "Add new sectors here. For each sector, list PSX ticker symbols. The app auto-discovers any sector you add. Benchmark stocks (MDTL, MLCF) are always added to the portfolio per CEP requirements.",
+    "schema_version": "1.0",
+    "benchmark_tickers": ["MDTL", "MLCF"],
+    "market_index": "KSE100",
+    "risk_free_rate": 0.18
+  },
+  "sectors": {
+    "Automobile Parts & Accessories": ["ATBA", "BWHL", "GTYR", "EXIDE", "LOADS", "ABIL"],
+    "Cement": ["MLCF", "DGKC", "LUCK", "CHCC", "POWER", "KOHC", "PIOC", "ACPL"],
+    "Commercial Banks": ["HBL", "UBL", "MCB", "BAFL", "ABL", "NBP", "BAHL", "MEBL"],
+    "Fertilizer": ["ENGRO", "FFC", "EFERT", "FATIMA", "FFBL"],
+    "Oil & Gas Exploration": ["PPL", "OGDC", "POL", "MARI"],
+    "Power Generation": ["HUBC", "KAPCO", "NPL", "NCPL", "PKGP"],
+    "Technology & Communication": ["SYS", "TRG", "AVN", "NETSOL", "PTC"],
+    "Food & Personal Care": ["NESTLE", "UNILEVER", "EFOODS", "NATF", "MFFL"]
+  }
+}
